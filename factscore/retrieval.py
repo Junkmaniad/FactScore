@@ -126,6 +126,8 @@ class Retrieval(object):
     def load_encoder(self):
         from sentence_transformers import SentenceTransformer
         encoder = SentenceTransformer("sentence-transformers/" + self.retrieval_type)
+        # can comment out the cuda part and see whether it affects things significantly
+        # cuda just makes us use a GPU for faster / more efficient computation, but this is more expensive.
         encoder = encoder.cuda()
         encoder = encoder.eval()
         self.encoder = encoder
