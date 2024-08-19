@@ -38,12 +38,14 @@ class AtomicFactGenerator(object):
     def run(self, generation, cost_estimate=None):
         """Convert the generation into a set of atomic facts. Return a total words cost if cost_estimate != None."""
         assert isinstance(generation, str), "generation must be a string"
+        # what does the .split("/n") really do? what if the generation just has no newlines, or is this an inherent assumption FactScore makes?
         paragraphs = [para.strip() for para in generation.split("\n") if len(para.strip()) > 0]
         return self.get_atomic_facts_from_paragraph(paragraphs, cost_estimate=cost_estimate)
 
     def get_atomic_facts_from_paragraph(self, paragraphs, cost_estimate=None):
         sentences = []
         para_breaks = []
+        # enumerate basically turns everything in a list into a tuple with (id, listobject)
         for para_idx, paragraph in enumerate(paragraphs):
             if para_idx > 0 :
                 para_breaks.append(len(sentences))
@@ -56,11 +58,11 @@ class AtomicFactGenerator(object):
             curr_sentences = fix_sentence_splitter(curr_sentences, initials)
             curr_sentences_2 = fix_sentence_splitter(curr_sentences_2, initials)
 
-            # checking this, just to ensure the crediability of the sentence splitter fixing algorithm
+            # checking this, just to ensure the crediability of the sentence splitter fixing algorithm (literally two runs of the same thing to check for consistency)
             assert curr_sentences == curr_sentences_2, (paragraph, curr_sentences, curr_sentences_2)
 
             sentences += curr_sentences
-
+        # surely we could just prompt the LM NOT to give us all the unnecessary pleasantaries?
         atoms_or_estimate = self.get_init_atomic_facts_from_sentence([sent for i, sent in enumerate(sentences) if not (not self.is_bio and ( \
                             (i==0 and (sent.startswith("Sure") or sent.startswith("Here are"))) or \
                             (i==len(sentences)-1 and (sent.startswith("Please") or sent.startswith("I hope") or sent.startswith("Here are")))))], cost_estimate=cost_estimate)
@@ -71,6 +73,7 @@ class AtomicFactGenerator(object):
             atoms = atoms_or_estimate
 
         atomic_facts_pairs = []
+        # more postprocessing with the quirks of LM responses
         for i, sent in enumerate(sentences):
             if not self.is_bio and ( \
                 (i==0 and (sent.startswith("Sure") or sent.startswith("Here are"))) or \
